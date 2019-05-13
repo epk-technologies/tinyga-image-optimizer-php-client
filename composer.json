@@ -1,0 +1,27 @@
+{
+    "name": "tinyga/image-optimizer-client",
+    "type": "library",
+    "description": "Tinyga Image Optimizer Client",
+    "keywords": ["tinyga", "image optimization"],
+    "homepage": "https://optimizer.tinyga.com/",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Jan Egert",
+            "email": "jan.egert@epk-technologies.com"
+        }
+    ],
+    "require": {
+        "guzzlehttp/guzzle": "^6.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "Tinyga\\ImageOptimizerClient\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tinyga\\Tests\\ImageOptimizerClient\\": "tests/"
+        }
+    }
+}

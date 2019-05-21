@@ -1,4 +1,5 @@
 <?php
+
 namespace Tinyga\ImageOptimizerClient\OptimizationRequest;
 
 
@@ -22,11 +23,20 @@ class SimpleOptimizationRequest extends AbstractOptimizationRequest
      * @param string|null $file_name
      * @param int|null $quality
      * @param array|null $keep_metadata
+     * @param string|null $post_result_to_url
+     * @param string|null $test_mode
+     *
      * @throws ImageOptimizerClientException
      */
-    public function __construct($image_content = null, $file_name = null, $quality = null, array $keep_metadata = null)
-    {
-        parent::__construct($quality, $keep_metadata);
+    public function __construct(
+        $image_content = null,
+        $file_name = null,
+        $quality = null,
+        array $keep_metadata = null,
+        $post_result_to_url = null,
+        $test_mode = null
+    ) {
+        parent::__construct($quality, $keep_metadata, $post_result_to_url, $test_mode);
         $image_content !== null && $this->setImageContent($image_content);
         $file_name !== null && $this->setImageFileName($file_name);
     }

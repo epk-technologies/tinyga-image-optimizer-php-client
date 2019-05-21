@@ -1,30 +1,39 @@
 <?php
+
 namespace Tinyga\ImageOptimizerClient\OptimizationRequest;
 
 
+use InvalidArgumentException;
+use SplFileInfo;
 use Tinyga\ImageOptimizerClient\ImageOptimizerClientException;
 
 class FileSimpleOptimizationRequest extends AbstractOptimizationRequest
 {
     /**
-     * @var \SplFileInfo $file
+     * @var SplFileInfo $file
      */
     protected $file;
 
     /**
-     * @param \SplFileInfo|null $file
+     * @param SplFileInfo|null $file
      * @param int|null $quality
      * @param array|null $keep_metadata
+     * @param string|null $post_result_to_url
+     *
      * @throws ImageOptimizerClientException
      */
-    public function __construct(\SplFileInfo $file = null, $quality = null, array $keep_metadata = null)
-    {
-        parent::__construct($quality, $keep_metadata);
+    public function __construct(
+        SplFileInfo $file = null,
+        $quality = null,
+        array $keep_metadata = null,
+        $post_result_to_url = null
+    ) {
+        parent::__construct($quality, $keep_metadata, $post_result_to_url);
         $file && $this->setFile($file);
     }
 
     /**
-     * @return \SplFileInfo
+     * @return SplFileInfo
      */
     public function getFile()
     {
@@ -32,12 +41,12 @@ class FileSimpleOptimizationRequest extends AbstractOptimizationRequest
     }
 
     /**
-     * @param \SplFileInfo $file
+     * @param SplFileInfo $file
      */
-    public function setFile(\SplFileInfo $file)
+    public function setFile(SplFileInfo $file)
     {
-        if(!$this->file->isReadable() || !$this->file->isFile()){
-            throw new \InvalidArgumentException("File '{$file->getPathname()}' does not exist or is not readable");
+        if (!$this->file->isReadable() || !$this->file->isFile()) {
+            throw new InvalidArgumentException("File '{$file->getPathname()}' does not exist or is not readable");
         }
         $this->file = $file;
     }
@@ -58,9 +67,10 @@ class FileSimpleOptimizationRequest extends AbstractOptimizationRequest
      */
     public function getImageContent()
     {
-        if(!$this->file){
+        if (!$this->file) {
             return '';
         }
+
         return (string)file_get_contents($this->file->getRealPath());
     }
 }

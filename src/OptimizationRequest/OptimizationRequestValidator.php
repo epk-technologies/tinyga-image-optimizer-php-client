@@ -1,4 +1,5 @@
 <?php
+
 namespace Tinyga\ImageOptimizerClient\OptimizationRequest;
 
 use Tinyga\ImageOptimizerClient\ImageOptimizerClientException;
@@ -8,15 +9,16 @@ class OptimizationRequestValidator
 
     /**
      * @param int $quality
+     *
      * @throws ImageOptimizerClientException
      */
     public function checkQuality($quality)
     {
-        if(
+        if (
             !is_int($quality) ||
             $quality < OptimizationRequestInterface::MIN_QUALITY ||
             $quality > OptimizationRequestInterface::MAX_QUALITY
-        ){
+        ) {
             throw new ImageOptimizerClientException(
                 sprintf(
                     "Invalid quality - must be number between %d and %d",
@@ -30,18 +32,19 @@ class OptimizationRequestValidator
 
     /**
      * @param array $metadata
+     *
      * @throws ImageOptimizerClientException
      */
     public function checkKeepMetadata($metadata)
     {
-        if(!is_array($metadata)){
+        if (!is_array($metadata)) {
             throw new ImageOptimizerClientException(
                 sprintf("Keep metadata must be an array, %s given.", gettype($metadata)),
                 ImageOptimizerClientException::CODE_INVALID_METADATA
             );
         }
 
-        if(!$metadata){
+        if (!$metadata) {
             return;
         }
 
@@ -52,11 +55,11 @@ class OptimizationRequestValidator
             OptimizationRequestInterface::KEEP_META_DATE,
             OptimizationRequestInterface::KEEP_META_COPYRIGHT,
             OptimizationRequestInterface::KEEP_META_GEOTAG,
-            OptimizationRequestInterface::KEEP_META_ORIENTATION
+            OptimizationRequestInterface::KEEP_META_ORIENTATION,
         ];
 
-        foreach($metadata as $meta){
-            if(!in_array($meta, $supported)){
+        foreach ($metadata as $meta) {
+            if (!in_array($meta, $supported)) {
                 throw new ImageOptimizerClientException(
                     sprintf("Keep metadata value '%s' is not supported.", $meta),
                     ImageOptimizerClientException::CODE_INVALID_METADATA
@@ -67,11 +70,12 @@ class OptimizationRequestValidator
 
     /**
      * @param string $image_file_name
+     *
      * @throws ImageOptimizerClientException
      */
     public function checkImageFileName($image_file_name)
     {
-        if(trim($image_file_name) === ''){
+        if (trim($image_file_name) === '') {
             throw new ImageOptimizerClientException(
                 "Missing image file name in request",
                 ImageOptimizerClientException::CODE_INVALID_FILE_NAME
@@ -81,11 +85,12 @@ class OptimizationRequestValidator
 
     /**
      * @param string $image_content
+     *
      * @throws ImageOptimizerClientException
      */
     public function checkImageContent($image_content, &$mime_type = null)
     {
-        if(!is_string($image_content) || $image_content === ''){
+        if (!is_string($image_content) || $image_content === '') {
             throw new ImageOptimizerClientException(
                 'Missing image content',
                 ImageOptimizerClientException::CODE_INVALID_FILE_NAME
@@ -98,16 +103,16 @@ class OptimizationRequestValidator
             OptimizationRequestInterface::IMAGE_PNG,
         ];
 
-        if(function_exists('getimagesizefromstring')){
+        if (function_exists('getimagesizefromstring')) {
             $size = @getimagesizefromstring($image_content);
-            if($size === false){
+            if ($size === false) {
                 throw new ImageOptimizerClientException(
                     'Invalid image content',
                     ImageOptimizerClientException::CODE_INVALID_FILE_NAME
                 );
             }
 
-            if(!in_array($size['mime'], $supported_types)){
+            if (!in_array($size['mime'], $supported_types)) {
                 throw new ImageOptimizerClientException(
                     "Image format '{$size['mime']}' is not supported yet",
                     ImageOptimizerClientException::CODE_INVALID_FILE_NAME
@@ -117,12 +122,62 @@ class OptimizationRequestValidator
             $mime_type = $size['mime'];
         }
 
-        throw new \RuntimeException("GD extension not loaded");
+//        throw new \RuntimeException("GD extension not loaded");
         //todo:  imagick if not GD ...
     }
 
     /**
+     * @param string $post_result_to_url
+     *
+     * @throws ImageOptimizerClientException
+     */
+    public function checkPostResultToUrl($post_result_to_url)
+    {
+        if ($post_result_to_url !== ''
+            && !filter_var($post_result_to_url, FILTER_VALIDATE_URL)
+        ) {
+            throw new ImageOptimizerClientException(
+                "Invalid URL format",
+                ImageOptimizerClientException::CODE_INVALID_RESULT_URL
+            );
+        }
+    }
+
+    /**
+     * @param string $mode
+     *
+     * @throws ImageOptimizerClientException
+     */
+    public function checkTestMode($mode)
+    {
+        if (!$mode) {
+            return;
+        }
+
+        $supported = [
+            OptimizationRequestInterface::TEST_MODE_SUCCESS,
+            OptimizationRequestInterface::TEST_MODE_INVALID_API_KEY,
+            OptimizationRequestInterface::TEST_MODE_INSUFFICIENT_CREDIT,
+            OptimizationRequestInterface::TEST_MODE_INVALID_IMAGE,
+            OptimizationRequestInterface::TEST_MODE_INVALID_PROCESSING_PARAMETERS,
+            OptimizationRequestInterface::TEST_MODE_INVALID_POST_URL,
+            OptimizationRequestInterface::TEST_MODE_INTERNAL_SERVER_ERROR,
+            OptimizationRequestInterface::TEST_MODE_PROCESSING_ERROR,
+            OptimizationRequestInterface::TEST_MODE_REJECTED_BY_PROCESSOR,
+            OptimizationRequestInterface::TEST_MODE_DELIVERY_ERROR,
+        ];
+
+        if (!in_array($mode, $supported)) {
+            throw new ImageOptimizerClientException(
+                sprintf("Test mode value '%s' is not supported.", $mode),
+                ImageOptimizerClientException::CODE_INVALID_METADATA
+            );
+        }
+    }
+
+    /**
      * @param OptimizationRequestInterface $optimization_request
+     *
      * @throws ImageOptimizerClientException
      */
     public function checkOptimizationRequest(OptimizationRequestInterface $optimization_request)
@@ -131,5 +186,7 @@ class OptimizationRequestValidator
         $this->checkKeepMetadata($optimization_request->getKeepMetadata());
         $this->checkImageFileName($optimization_request->getImageFileName());
         $this->checkImageContent($optimization_request->getImageContent());
+        $this->checkPostResultToUrl($optimization_request->getPostResultToUrl());
+        $this->checkTestMode($optimization_request->getTestMode());
     }
 }

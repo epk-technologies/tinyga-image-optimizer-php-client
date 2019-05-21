@@ -1,4 +1,5 @@
 <?php
+
 namespace Tinyga\ImageOptimizerClient\OptimizationRequest;
 
 use Tinyga\ImageOptimizerClient\ImageOptimizerClientException;
@@ -16,21 +17,39 @@ abstract class AbstractOptimizationRequest implements OptimizationRequestInterfa
     protected $keep_metadata = [OptimizationRequestInterface::KEEP_META_ALL];
 
     /**
+     * @var string
+     */
+    protected $post_result_to_url = '';
+
+    /**
      * @var bool
      */
-    protected $testing_request = false;
+    protected $async_result = false;
+
+    /**
+     * @var string
+     */
+    protected $test_mode = '';
 
     /**
      * @param int|null $quality
      * @param array|null $keep_metadata
+     * @param string|null $post_result_to_url
+     * @param string|null $test_mode
+     *
      * @throws ImageOptimizerClientException
      */
-    public function __construct($quality = null, array $keep_metadata = null)
-    {
+    public function __construct(
+        $quality = null,
+        array $keep_metadata = null,
+        $post_result_to_url = null,
+        $test_mode = null
+    ) {
         $quality !== null && $this->setQuality($quality);
         $keep_metadata !== null && $this->setKeepMetadata($keep_metadata);
+        $post_result_to_url !== null && $this->setPostResultToUrl($post_result_to_url);
+        $test_mode !== null && $this->setTestMode($test_mode);
     }
-
 
     /**
      * @return int
@@ -42,6 +61,7 @@ abstract class AbstractOptimizationRequest implements OptimizationRequestInterfa
 
     /**
      * @param int $quality
+     *
      * @throws ImageOptimizerClientException
      */
     public function setQuality($quality)
@@ -60,6 +80,7 @@ abstract class AbstractOptimizationRequest implements OptimizationRequestInterfa
 
     /**
      * @param array $keep_metadata
+     *
      * @throws ImageOptimizerClientException
      */
     public function setKeepMetadata($keep_metadata)
@@ -69,18 +90,51 @@ abstract class AbstractOptimizationRequest implements OptimizationRequestInterfa
     }
 
     /**
-     * @return bool
+     * @return string
      */
-    public function isTestingRequest()
+    public function getPostResultToUrl()
     {
-        return $this->testing_request;
+        return $this->post_result_to_url;
     }
 
     /**
-     * @param bool $testing_request
+     * @param string $post_result_to_url
      */
-    public function setTestingRequest($testing_request)
+    public function setPostResultToUrl($post_result_to_url)
     {
-        $this->testing_request = $testing_request;
+        $this->post_result_to_url = (string)$post_result_to_url;
+        $this->async_result = true;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isAsyncResult()
+    {
+        return $this->async_result;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isTestMode()
+    {
+        return $this->test_mode !== '';
+    }
+
+    /**
+     * @return string
+     */
+    public function getTestMode()
+    {
+        return $this->test_mode;
+    }
+
+    /**
+     * @param string $test_mode
+     */
+    public function setTestMode($test_mode)
+    {
+        $this->test_mode = $test_mode;
     }
 }

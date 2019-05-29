@@ -222,14 +222,14 @@ class ImageOptimizerClient
     {
         $response = @json_decode($response->getBody());
 
-        if (!isset($response->task_id)) {
+        if (!isset($response->task_ID)) {
             throw new ImageOptimizerClientException(
                 "Optimization failed - task id not present",
                 ImageOptimizerClientException::CODE_API_CALL_FAILED
             );
         }
 
-        $task_id = $response->task_id;
+        $task_id = $response->task_ID;
 
         return new ImageOptimizerResult($task_id);
     }

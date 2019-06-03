@@ -21,6 +21,8 @@ class ImageOptimizerClient
 
     const API_METHOD_OPTIMIZE_IMAGE = 'optimize';
 
+    const API_RESPONSE_HEADER_TASK_ID = 'Task-ID';
+
 
     /**
      * @var string
@@ -220,16 +222,16 @@ class ImageOptimizerClient
      */
     protected function getImageOptimizerAsyncResult(MessageInterface $response)
     {
-        $response = @json_decode($response->getBody());
+//        $response = @json_decode($response->getBody());
 
-        if (!isset($response->task_ID)) {
+        $task_id = $response->getHeaderLine(self::API_RESPONSE_HEADER_TASK_ID);
+
+        if (!$task_id) {
             throw new ImageOptimizerClientException(
                 "Optimization failed - task id not present",
                 ImageOptimizerClientException::CODE_API_CALL_FAILED
             );
         }
-
-        $task_id = $response->task_ID;
 
         return new ImageOptimizerResult($task_id);
     }
@@ -245,7 +247,7 @@ class ImageOptimizerClient
         OptimizationRequestInterface $optimization_request,
         MessageInterface $response
     ) {
-        $task_id = $response->getHeaderLine('Task-ID');
+        $task_id = $response->getHeaderLine(self::API_RESPONSE_HEADER_TASK_ID);
         $image = $this->getImageWithFileName($optimization_request->getImageFileName(), $response->getBody());
 
         return new ImageOptimizerResult($task_id, $image);

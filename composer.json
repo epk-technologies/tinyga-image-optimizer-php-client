@@ -1,5 +1,5 @@
 {
-    "name": "tinyga/image-optimizer-client",
+    "name": "epk-technologies/tinyga-image-optimizer-php-client",
     "type": "library",
     "description": "Tinyga Image Optimizer Client",
     "keywords": ["tinyga", "image optimization"],

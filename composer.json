@@ -8,20 +8,23 @@
     "authors": [
         {
             "name": "Jan Egert",
-            "email": "jan.egert@epk-technologies.com"
+            "email": "jan.egert@epk-technologies.com",
+            "homepage": "http://www.epk-technologies.com"
         }
     ],
     "require": {
+        "php": ">=5.5",
+        "ext-json": "*",
         "guzzlehttp/guzzle": "^6.3"
     },
     "autoload": {
         "psr-4": {
-            "Tinyga\\ImageOptimizerClient\\": "src/"
+            "Tinyga\\ImageOptimizer\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Tinyga\\Tests\\ImageOptimizerClient\\": "tests/"
+            "Tinyga\\Tests\\ImageOptimizer\\": "tests/"
         }
     }
 }

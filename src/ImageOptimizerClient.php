@@ -1,27 +1,34 @@
 <?php
-
-namespace Tinyga\ImageOptimizerClient;
+namespace Tinyga\ImageOptimizer;
 
 use GuzzleHttp\Client as HttpClient;
-use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\RequestOptions;
 use InvalidArgumentException;
-use Psr\Http\Message\MessageInterface;
-use Tinyga\ImageOptimizerClient\Image\ImageWithFileName;
-use Tinyga\ImageOptimizerClient\OptimizationRequest\OptimizationRequestInterface;
-use Tinyga\ImageOptimizerClient\OptimizationRequest\OptimizationRequestValidator;
+use Psr\Http\Message\ResponseInterface;
+use Tinyga\ImageOptimizer\Image\ImageContent;
+use Tinyga\ImageOptimizer\Image\ImageURL;
 
 class ImageOptimizerClient
 {
-    const IMAGE_POST_FIELD_NAME = 'image';
-
-    const API_KEY_PARAM_NAME = 'api-key';
-
+    const API_KEY_PARAM = 'api-key';
     const DEFAULT_ENDPOINT = 'https://image-optimizer.tinyga.com/api/v1/';
+    const CLIENT_TIMEOUT = 90.0;
 
-    const API_METHOD_OPTIMIZE_IMAGE = 'optimize';
+    const PARAM_IMAGE = 'image';
+    const PARAM_IMAGE_URL = 'image_url';
 
-    const API_RESPONSE_HEADER_TASK_ID = 'Task-ID';
+    const PARAM_QUALITY = 'quality';
+    const PARAM_KEEP_METADATA = 'keep_metadata';
+    const PARAM_POST_RESULT_TO_URL = 'post_result_to_url';
+    const PARAM_OPERATIONS = 'operations';
+    const PARAM_TEST = 'test';
+    const PARAM_OUTPUT_TYPE = 'output_type';
+
+    const KEEP_METADATA_SEPARATOR = ',';
+
+    const OPTIMIZATION_API_METHOD = 'process-image';
+    const TASK_ID_HEADER = 'Task-ID';
 
 
     /**
@@ -34,22 +41,20 @@ class ImageOptimizerClient
      */
     protected $api_key;
 
-    /**
-     * @var HttpClient
-     */
-    protected $http_client;
 
     /**
-     * @param string $api_key
-     *
-     * @param string $api_endpoint
-     *
-     * @throws ImageOptimizerClientException
+     * @param string|null $api_key
+     * @param string|null $api_endpoint
      */
     public function __construct($api_key = null, $api_endpoint = null)
     {
-        $api_key !== null && $this->setApiKey($api_key);
-        $api_endpoint !== null && $this->setApiEndpointUrl($api_endpoint);
+        if($api_key !== null){
+            $this->setApiKey($api_key);
+        }
+
+        if($api_endpoint !== null){
+            $this->setApiEndpointUrl($api_endpoint);
+        }
     }
 
     /**
@@ -73,16 +78,11 @@ class ImageOptimizerClient
 
     /**
      * @param string $api_endpoint_url
-     *
-     * @throws ImageOptimizerClientException
      */
     public function setApiEndpointUrl($api_endpoint_url)
     {
         if (!filter_var($api_endpoint_url, FILTER_VALIDATE_URL)) {
-            throw new ImageOptimizerClientException(
-                "Invalid API endpoint URL",
-                ImageOptimizerClientException::CODE_INVALID_ENDPOINT
-            );
+            throw new \InvalidArgumentException("Invalid API endpoint URL format");
         }
         $this->api_endpoint_url = rtrim($api_endpoint_url, '/') . '/';
     }
@@ -97,178 +97,198 @@ class ImageOptimizerClient
 
     /**
      * @param string $api_key
-     *
-     * @throws ImageOptimizerClientException
      */
     public function setApiKey($api_key)
     {
         if (!preg_match('~^[\w\-]+$~', $api_key)) {
-            throw new ImageOptimizerClientException(
-                "Invalid API key format",
-                ImageOptimizerClientException::CODE_INVALID_API_KEY
-            );
+            throw new InvalidArgumentException("Invalid API key format");
         }
         $this->api_key = (string)$api_key;
     }
 
-    /**
-     * @param HttpClient $http_client
-     */
-    public function setHttpClient(HttpClient $http_client)
-    {
-        $this->http_client = $http_client;
-    }
 
     /**
-     * @return HttpClient
+     * Send image for optimization/processing
+     * If anything fails, OptimizationException is thrown
+     * If post_result_to_url is defined in request:
+     * - result with task ID and without optimized image will be returned to be processed later
+     * - @see ImageOptimizerAsyncResultHandler how to handle request from Tinyga when optimization is ready
+     *
+     *
+     * @param OptimizationRequest $request
+     * @return OptimizationResult
+     * @throws OptimizationException
      */
-    public function getHttpClient()
+    public function optimizeImage(OptimizationRequest $request)
     {
-        if (!$this->http_client) {
-            $this->setHttpClient(new HttpClient());
+        if(!$this->api_key){
+            throw new \RuntimeException("API key is not defined");
         }
 
-        return $this->http_client;
-    }
+        $request->validate();
+        $post_params = $this->preparePostParameters($request, $submit_method);
 
-    /**
-     * @param OptimizationRequestInterface $optimization_request
-     *
-     * @return ImageOptimizerResult
-     * @throws ImageOptimizerClientException
-     */
-    public function optimizeImage(OptimizationRequestInterface $optimization_request)
-    {
-        $this->validateRequest($optimization_request);
 
-        $url = $this->getApiEndpointUrl(self::API_METHOD_OPTIMIZE_IMAGE);
-        $client = $this->getHttpClient();
+        $client = new HttpClient([
+            'base_uri' => $this->getApiEndpointUrl(),
+            'timeout' => self::CLIENT_TIMEOUT
+        ]);
+
         try {
-            $response = $client->request('POST', $url, [
-                RequestOptions::MULTIPART => [
-                    [
-                        'name' => self::API_KEY_PARAM_NAME,
-                        'contents' => $this->getApiKey()
-                    ],
-                    [
-                        'name' => self::IMAGE_POST_FIELD_NAME,
-                        'filename' => $optimization_request->getImageFileName(),
-                        'contents' => $optimization_request->getImageContent(),
-                    ],
-                    [
-                        'name' => OptimizationRequestInterface::PARAM_QUALITY,
-                        'contents' => $optimization_request->getQuality()
-                    ],
-                    [
-                        'name' => OptimizationRequestInterface::PARAM_KEEP_METADATA,
-                        'contents' => implode(',', $optimization_request->getKeepMetadata())
-                    ],
-                    [
-                        'name' => OptimizationRequestInterface::PARAM_POST_RESULT_TO_URL,
-                        'contents' => $optimization_request->getPostResultToUrl()
-                    ],
-                    [
-                        'name' => OptimizationRequestInterface::PARAM_TEST_MODE,
-                        'contents' => $optimization_request->getTestMode()
-                    ],
-                ],
-            ]);
-        } catch (GuzzleException $e) {
-            throw new ImageOptimizerClientException(
-                "Optimization failed - {$e->getMessage()}",
-                ImageOptimizerClientException::CODE_API_CALL_FAILED,
-                $e
-            );
+
+            $response = $client->post(self::OPTIMIZATION_API_METHOD, [$submit_method => $post_params]);
+            $result = $this->processResponse($request, $response);
+            return $result;
+
+
+        } catch(OptimizationException $e){
+
+            throw $e;
+
+        } catch (\Exception $e){
+
+            $error_code = OptimizationException::ERR_CLIENT_ERROR;
+            $error_message = $e->getMessage();
+            $task_id = null;
+
+            $response = null;
+            if($e instanceof RequestException){
+                $response = $e->getResponse();
+            }
+
+            if(
+                $response &&
+                $response->getHeaderLine('Content-Type') === 'application/json'
+            ){
+                $body = (string)$response->getBody();
+                $decoded = @json_decode($body, true);
+                if(isset($decoded['error_code'])){
+                    $error_code = $decoded['error_code'];
+                }
+
+                if(isset($decoded['error_message'])){
+                    $error_message = $decoded['error_message'];
+                }
+            }
+
+            if(
+                $response &&
+                $response->getHeaderLine(self::TASK_ID_HEADER)
+            ){
+                $task_id = $response->getHeaderLine(self::TASK_ID_HEADER);
+            }
+
+            throw new OptimizationException($error_code, $error_message,  $task_id,0, $e);
+
+        }
+    }
+
+    /**
+     * @param OptimizationRequest $request
+     * @param null|string $submit_method
+     * @return array
+     */
+    protected function preparePostParameters(OptimizationRequest $request, &$submit_method = null)
+    {
+        $inline_params = [
+            self::API_KEY_PARAM => $this->getApiKey(),
+            self::PARAM_QUALITY => $request->getQuality(),
+            self::PARAM_KEEP_METADATA => implode(self::KEEP_METADATA_SEPARATOR, $request->getKeepMetadata())
+        ];
+
+        if($request->isTest()){
+            $inline_params[self::PARAM_TEST] = 1;
+        }
+
+        if($request->getPostResultToUrl()){
+            $inline_params[self::PARAM_POST_RESULT_TO_URL] = $request->getPostResultToUrl();
+        }
+
+        if($request->getOutputType()){
+            $inline_params[self::PARAM_OUTPUT_TYPE] = $request->getOutputType();
+        }
+
+        $operations = $request->getOperations();
+        if($operations){
+            foreach($operations as $op_name => $operation){
+                $inline_params[self::PARAM_OPERATIONS . "[{$op_name}]"] = json_encode($operation);
+            }
+        }
+
+        $image = $request->getImage();
+        if($image instanceof ImageURL){
+
+            $inline_params[self::PARAM_IMAGE_URL] = $image->getUrl();
+            $submit_method = RequestOptions::FORM_PARAMS;
+            $post_params = $inline_params;
+
+        } else {
+
+            $submit_method = RequestOptions::MULTIPART;
+            $post_params = [];
+            foreach($inline_params as $param => $value){
+                $post_params[] = ['name' => $param, 'contents' => $value];
+            }
+
+            $post_params[] = [
+                'name' => self::PARAM_IMAGE,
+                'contents' => $image->getContent(),
+                'filename' => $image->getFileName()
+            ];
 
         }
 
-        $is_async_result = $optimization_request->isAsyncResult();
-        return $is_async_result
-            ? $this->getImageOptimizerAsyncResult($response)
-            : $this->getImageOptimizerSyncResult($optimization_request, $response);
+        return $post_params;
     }
 
     /**
-     * @param OptimizationRequestInterface $optimization_request
-     *
-     * @throws ImageOptimizerClientException
+     * @param OptimizationRequest $request
+     * @param ResponseInterface $response
+     * @return OptimizationResult
+     * @throws OptimizationException
      */
-    protected function validateRequest(OptimizationRequestInterface $optimization_request)
+    protected function processResponse(OptimizationRequest $request, ResponseInterface $response)
     {
-        $this->validateApiKey();
-        $validator = new OptimizationRequestValidator();
-        $validator->checkOptimizationRequest($optimization_request);
-    }
-
-    /**
-     * @throws ImageOptimizerClientException
-     */
-    protected function validateApiKey()
-    {
-        $api_key = (string)$this->getApiKey();
-        if ($api_key === '') {
-            throw new ImageOptimizerClientException(
-                "Missing API key",
-                ImageOptimizerClientException::CODE_INVALID_API_KEY
-            );
-        }
-    }
-
-    /**
-     * @param MessageInterface $response
-     *
-     * @return ImageOptimizerResult
-     * @throws ImageOptimizerClientException
-     */
-    protected function getImageOptimizerAsyncResult(MessageInterface $response)
-    {
-//        $response = @json_decode($response->getBody());
-
-        $task_id = $response->getHeaderLine(self::API_RESPONSE_HEADER_TASK_ID);
-
-        if (!$task_id) {
-            throw new ImageOptimizerClientException(
-                "Optimization failed - task id not present",
-                ImageOptimizerClientException::CODE_API_CALL_FAILED
+        $task_id = $response->getHeaderLine(self::TASK_ID_HEADER);
+        if(!$task_id){
+            throw new OptimizationException(
+                OptimizationException::ERR_PROTOCOL_ERROR,
+                "Missing Task-ID header in response"
             );
         }
 
-        return new ImageOptimizerResult($task_id);
-    }
+        if($request->getPostResultToUrl()){
+            return new OptimizationResult($task_id);
+        }
 
-    /**
-     * @param OptimizationRequestInterface $optimization_request
-     * @param MessageInterface $response
-     *
-     * @return ImageOptimizerResult
-     * @throws ImageOptimizerClientException
-     */
-    protected function getImageOptimizerSyncResult(
-        OptimizationRequestInterface $optimization_request,
-        MessageInterface $response
-    ) {
-        $task_id = $response->getHeaderLine(self::API_RESPONSE_HEADER_TASK_ID);
-        $image = $this->getImageWithFileName($optimization_request->getImageFileName(), $response->getBody());
-
-        return new ImageOptimizerResult($task_id, $image);
-    }
-
-    /**
-     * @param string $source_path
-     * @param string $content
-     *
-     * @return ImageWithFileName
-     * @throws ImageOptimizerClientException
-     */
-    protected function getImageWithFileName($source_path, $content)
-    {
-        try {
-            return new ImageWithFileName($source_path, (string)$content);
-        } catch (InvalidArgumentException $e) {
-            throw new ImageOptimizerClientException(
-                "Optimization failed - invalid image in API response: {$e->getMessage()}",
-                ImageOptimizerClientException::CODE_API_CALL_FAILED
+        $content_type = $response->getHeaderLine('Content-Type');
+        if(!preg_match('~^image/\w+$~', $content_type)){
+            throw new OptimizationException(
+                OptimizationException::ERR_PROTOCOL_ERROR,
+                "Image expected as an optimization result, {$content_type} given",
+                $task_id
             );
         }
+
+        $disposition = $response->getHeaderLine('Content-Disposition');
+        if(!preg_match('~filename="?([^"]+)"?$~', $disposition, $m)){
+            throw new OptimizationException(
+                OptimizationException::ERR_PROTOCOL_ERROR,
+                "Failed to determine image file name from response Content-Disposition",
+                $task_id
+            );
+        }
+
+        $content = (string)$response->getBody();
+        if(md5($content) !== $response->getHeaderLine('Content-MD5')){
+            throw new OptimizationException(
+                OptimizationException::ERR_PROTOCOL_ERROR,
+                "Image content malformed - MD5 checksums do not match",
+                $task_id
+            );
+        }
+
+        $image = new ImageContent($content, $m[1]);
+        return new OptimizationResult($task_id, $image);
     }
 }

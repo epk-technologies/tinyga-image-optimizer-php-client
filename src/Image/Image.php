@@ -1,60 +1,48 @@
 <?php
+namespace Tinyga\ImageOptimizer\Image;
 
-namespace Tinyga\ImageOptimizerClient\Image;
-
-use InvalidArgumentException;
-
-class Image
+abstract class Image implements ImageInterface
 {
+    /**
+     * @var string
+     */
+    protected $file_name;
+
     /**
      * @var ImageParameters
      */
     protected $image_parameters;
 
     /**
-     * @var string
+     * @param string $file_name
      */
-    protected $content;
-
-    /**
-     * Image constructor.
-     *
-     * @param null $content
-     *
-     * @throws InvalidArgumentException
-     */
-    function __construct($content = null)
+    public function __construct($file_name)
     {
-        $content !== null && $this->setContent($content);
-    }
-
-    /**
-     * @return ImageParameters
-     */
-    public function getImageParameters()
-    {
-        return $this->image_parameters;
+        $this->file_name = trim($file_name);
+        if($this->file_name === ''){
+            throw new \InvalidArgumentException("File name is not defined");
+        }
     }
 
     /**
      * @return string
      */
-    public function getContent()
+    public function getFileName()
     {
-        return $this->content;
+        return (string)$this->file_name;
     }
 
     /**
-     * @param $content
-     *
-     * @throws InvalidArgumentException
+     * @return ImageParameters
      */
-    public function setContent($content)
+    function getImageParameters()
     {
-        $resolver = new ImageParametersResolver();
-        $this->image_parameters = $resolver->resolveParametersFromContent($content);
-        $this->content = $content;
+        if(!$this->image_parameters){
+            $this->image_parameters = ImageParametersResolver::resolveImageParameters($this);
+        }
+        return $this->image_parameters;
     }
+
 
     /**
      * @return string
@@ -63,5 +51,4 @@ class Image
     {
         return $this->getContent();
     }
-
 }

@@ -18,7 +18,7 @@ class ImageParametersResolver
 
         $image_parameters = new ImageParameters(
             $image_size['mime'],
-            strlen($image_size),
+            strlen($image_content),
             $image_size[0], $image_size[1]
         );
 

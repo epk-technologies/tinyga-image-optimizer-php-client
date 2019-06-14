@@ -44,15 +44,29 @@ class Operations
     }
 
 
-
     /**
      * @param string $operation_name
+     * @param null|array|string $params operation configuration as array or string
      * @return Operation
+     * @see Operation::initFromArray()
+     * @see Operation::initFromString()
      */
-    public function createOperation($operation_name)
+    public static function createOperation($operation_name, $params = null)
     {
         $operation_class = self::getOperationClass($operation_name);
+        /** @var Operation $operation */
         $operation = new $operation_class();
+
+        if($params === null){
+            return $operation;
+        }
+
+        if(is_array($params)){
+            $operation->initFromArray($params);
+        } else {
+            $operation->initFromString($params);
+        }
+
         return $operation;
     }
 
@@ -60,7 +74,7 @@ class Operations
      * @param string|null $axis
      * @return OperationFlip
      */
-    public function createFlipOperation($axis = null)
+    public static function createFlipOperation($axis = null)
     {
         $operation = new OperationFlip();
         $axis !== null && $operation->setAxis($axis);
@@ -71,7 +85,7 @@ class Operations
      * @param float|null $gamma
      * @return OperationGamma
      */
-    public function createGammaOperation($gamma = null)
+    public static function createGammaOperation($gamma = null)
     {
         return new OperationGamma($gamma);
     }
@@ -79,7 +93,7 @@ class Operations
     /**
      * @return OperationGrayscale
      */
-    public function createGrayscaleOperation()
+    public static function createGrayscaleOperation()
     {
         return new OperationGrayscale();
     }
@@ -89,7 +103,7 @@ class Operations
      * @param string|null $method
      * @return OperationReduceColors
      */
-    public function createReduceColorsOperation($colors = null, $method = null)
+    public static function createReduceColorsOperation($colors = null, $method = null)
     {
         return new OperationReduceColors($colors, $method);
     }
@@ -102,7 +116,7 @@ class Operations
      * @param string|null $method
      * @return OperationResize
      */
-    public function createResizeOperation(
+    public static function createResizeOperation(
         $width = null,
         $height = null,
         $strategy = null,
@@ -118,7 +132,7 @@ class Operations
             $method
         );
     }
-
+    
     /**
      * @param string|int|null $degrees
      * @return OperationRotate

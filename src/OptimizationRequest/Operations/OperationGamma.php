@@ -51,4 +51,15 @@ class OperationGamma extends Operation
         }
         $this->gamma = $gamma;
     }
+
+    /**
+     * @param string $value
+     */
+    protected function _initFromString($value)
+    {
+        if(!is_numeric($value)){
+            throw new \InvalidArgumentException("Gamma value expected");
+        }
+        $this->setGamma((float)$value);
+    }
 }

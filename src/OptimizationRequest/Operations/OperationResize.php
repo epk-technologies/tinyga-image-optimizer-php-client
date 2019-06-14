@@ -205,4 +205,23 @@ class OperationResize extends Operation
     {
         $this->upscale_allowed = (bool)$upscale_allowed;
     }
+
+    /**
+     * @param string $value
+     */
+    protected function _initFromString($value)
+    {
+        $value_pattern = 'auto|\d+(?:px)?|\d+(\.\d+)?%';
+        if(!preg_match('~^(?:'.$value_pattern.')(?:x(?:'.$value_pattern.'))?$~', $value)){
+            throw new \InvalidArgumentException("Size or Width x Height format expected");
+        }
+
+        $wh = explode('x', $value);
+        if(!isset($wh[1])){
+            $wh[1] = $wh[0];
+        }
+
+        $this->setWidth($wh[0]);
+        $this->setHeight($wh[1]);
+    }
 }

@@ -56,4 +56,15 @@ class OperationRotate extends Operation
         }
         $this->degrees = $degrees;
     }
+
+    /**
+     * @param string $value
+     */
+    protected function _initFromString($value)
+    {
+        if(is_numeric($value)){
+            $value = (int)$value;
+        }
+        $this->setDegrees($value);
+    }
 }

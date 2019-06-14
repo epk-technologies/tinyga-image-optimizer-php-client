@@ -10,4 +10,12 @@ class OperationGrayscale extends Operation
     {
         return Operations::OPERATION_GRAYSCALE;
     }
+
+
+    /**
+     * @param string $value
+     */
+    protected function _initFromString($value)
+    {
+    }
 }

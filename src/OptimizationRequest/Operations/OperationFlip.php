@@ -55,4 +55,12 @@ class OperationFlip extends Operation
         }
         $this->axis = $axis;
     }
+
+    /**
+     * @param string $value
+     */
+    protected function _initFromString($value)
+    {
+        $this->setAxis($value);
+    }
 }

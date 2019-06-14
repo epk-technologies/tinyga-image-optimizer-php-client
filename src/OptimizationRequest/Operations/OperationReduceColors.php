@@ -88,4 +88,15 @@ class OperationReduceColors extends Operation
         }
         $this->method = $method;
     }
+
+    /**
+     * @param string $value
+     */
+    protected function _initFromString($value)
+    {
+        if(!is_numeric($value)){
+            throw new \InvalidArgumentException("Colors count expected");
+        }
+        $this->setColors((int)$value);
+    }
 }

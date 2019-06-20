@@ -17,6 +17,9 @@
         "ext-json": "*",
         "guzzlehttp/guzzle": "^6.3"
     },
+    "require-dev": {
+        "phpunit/phpunit": "^4.8.35 || ^5.7 || ^6.4 || ^7.0"
+    },
     "autoload": {
         "psr-4": {
             "Tinyga\\ImageOptimizer\\": "src/"
@@ -24,7 +27,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Tinyga\\Tests\\ImageOptimizer\\": "tests/"
+            "Tinyga\\ImageOptimizerTests\\": "tests/"
         }
     }
 }

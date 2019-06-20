@@ -46,6 +46,22 @@ class OperationFlip extends Operation
     }
 
     /**
+     * @return bool
+     */
+    public function isHorizontalFlip()
+    {
+        return $this->axis === self::AXIS_Y;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isVerticalFlip()
+    {
+        return $this->axis === self::AXIS_X;
+    }
+
+    /**
      * @param string $axis
      */
     public function setAxis($axis)

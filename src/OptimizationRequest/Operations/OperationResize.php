@@ -13,7 +13,7 @@ class OperationResize extends Operation
     const STRATEGY_EXACT = 'exact';
     const STRATEGY_FIT = 'fit';
     
-    const SIZE_AUTO = self::SIZE_AUTO;
+    const SIZE_AUTO = 'auto';
     const MAX_SIZE = 16384;
     const MAX_PERCENT = 400;
 

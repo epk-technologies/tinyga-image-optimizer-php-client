@@ -33,7 +33,7 @@ class OperationRotate extends Operation
         }
     }
 
-    function getOperationName()
+    function getOperationType()
     {
         return Operations::OPERATION_ROTATE;
     }

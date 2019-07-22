@@ -3,38 +3,10 @@ namespace Tinyga\ImageOptimizer;
 
 use Tinyga\ImageOptimizer\Image\ImageInterface;
 use Tinyga\ImageOptimizer\OptimizationRequest\Operations\Operation;
+use Tinyga\ImageOptimizer\OptimizationRequest\OutputParameters;
 
 class OptimizationRequest
 {
-    const LOSSLESS_QUALITY = 100;
-    const DEFAULT_LOSSY_QUALITY = 95;
-
-    const MIN_QUALITY = 1;
-    const MAX_QUALITY = self::LOSSLESS_QUALITY;
-
-    const META_ALL = 'all';
-
-    const META_PROFILE = 'profile';
-    const META_DATE = 'date';
-    const META_COPYRIGHT = 'copyright';
-    const META_GEOTAG = 'geotag';
-    const META_ORIENTATION = 'orientation';
-
-    protected static $allowed_keep_metadata = [
-        self::META_ALL,
-        self::META_PROFILE,
-        self::META_DATE,
-        self::META_COPYRIGHT,
-        self::META_GEOTAG,
-        self::META_ORIENTATION,
-    ];
-
-    protected static $allowed_output_types = [
-        ImageInterface::TYPE_JPEG,
-        ImageInterface::TYPE_PNG,
-        ImageInterface::TYPE_GIF,
-    ];
-
     /**
      * @var ImageInterface
      */
@@ -51,14 +23,9 @@ class OptimizationRequest
     protected $test = false;
 
     /**
-     * @var int
+     * @var OutputParameters
      */
-    protected $quality = self::LOSSLESS_QUALITY;
-
-    /**
-     * @var array
-     */
-    protected $keep_metadata = [self::META_ALL];
+    protected $output_parameters;
 
     /**
      * @var Operation[]
@@ -66,13 +33,34 @@ class OptimizationRequest
     protected $operations = [];
 
     /**
-     * @var string|null
+     * @param ImageInterface $image
+     * @param OutputParameters|null $output_parameters
+     * @param array $operations
      */
-    protected $output_type;
-
-    function __construct(ImageInterface $image)
+    function __construct(ImageInterface $image, OutputParameters $output_parameters = null, array $operations = [])
     {
         $this->image = $image;
+        if(!$output_parameters){
+            $output_parameters = new OutputParameters();
+        }
+        $this->setOutputParameters($output_parameters);
+        $this->setOperations($operations);
+    }
+
+    /**
+     * @return OutputParameters
+     */
+    public function getOutputParameters()
+    {
+        return $this->output_parameters;
+    }
+
+    /**
+     * @param OutputParameters $output_parameters
+     */
+    public function setOutputParameters(OutputParameters $output_parameters)
+    {
+        $this->output_parameters = $output_parameters;
     }
 
     /**
@@ -104,7 +92,10 @@ class OptimizationRequest
      */
     public function setPostResultToUrl($post_result_to_url)
     {
-        if($post_result_to_url !== null && !filter_var($post_result_to_url)){
+        if(
+            $post_result_to_url !== null &&
+            !filter_var($post_result_to_url, FILTER_VALIDATE_URL)
+        ){
             throw new \InvalidArgumentException("Invalid POST result to URL format");
         }
         $this->post_result_to_url = $post_result_to_url;
@@ -126,69 +117,6 @@ class OptimizationRequest
         $this->test = (bool)$test;
     }
 
-    /**
-     * @return int
-     */
-    public function getQuality()
-    {
-        return $this->quality;
-    }
-
-    /**
-     * @param int $quality
-     */
-    public function setQuality($quality)
-    {
-        $quality = (int)$quality;
-        if($quality < self::MIN_QUALITY || $quality > self::MAX_QUALITY){
-            throw new \InvalidArgumentException(sprintf(
-                "Invalid quality - must be between %d and %d",
-                self::MIN_QUALITY,
-                self::MAX_QUALITY
-            ));
-        }
-        $this->quality = $quality;
-    }
-
-    /**
-     * @return array
-     */
-    public function getKeepMetadata()
-    {
-        return $this->keep_metadata;
-    }
-
-    /**
-     * @param array $keep_metadata
-     */
-    public function setKeepMetadata(array $keep_metadata)
-    {
-        foreach($keep_metadata as $meta){
-            if(!in_array($meta, self::$allowed_keep_metadata)){
-                throw new \InvalidArgumentException("Invalid keep metadata value '{$meta}'");
-            }
-        }
-        $this->keep_metadata = $keep_metadata;
-    }
-
-    /**
-     * @return string|null
-     */
-    public function getOutputType()
-    {
-        return $this->output_type;
-    }
-
-    /**
-     * @param string|null $output_type
-     */
-    public function setOutputType($output_type)
-    {
-        if($output_type !== null && !in_array($output_type, self::$allowed_output_types)){
-            throw new \InvalidArgumentException("Invalid output type '{$output_type}'");
-        }
-        $this->output_type = $output_type;
-    }
 
     /**
      * @return Operation[]
@@ -222,37 +150,37 @@ class OptimizationRequest
      */
     public function addOperation(Operation $operation)
     {
-        $this->operations[$operation->getOperationName()] = $operation;
+        $this->operations[$operation->getOperationType()] = $operation;
     }
 
     /**
-     * @param string $operation
+     * @param string $operation_type
      * @return Operation|null
      */
-    public function getOperation($operation)
+    public function getOperation($operation_type)
     {
-        return isset($this->operations[$operation])
-            ? $this->operations[$operation]
+        return isset($this->operations[$operation_type])
+            ? $this->operations[$operation_type]
             : null;
     }
 
     /**
-     * @param string $operation
+     * @param string $operation_type
      * @return bool
      */
-    public function hasOperation($operation)
+    public function hasOperation($operation_type)
     {
-        return isset($this->operations[$operation]);
+        return isset($this->operations[$operation_type]);
     }
 
     /**
-     * @param string $operation
+     * @param string $operation_type
      * @return bool
      */
-    public function removeOperation($operation)
+    public function removeOperation($operation_type)
     {
-        if(isset($this->operations[$operation])){
-            unset($this->operations[$operation]);
+        if(isset($this->operations[$operation_type])){
+            unset($this->operations[$operation_type]);
             return true;
         }
         return false;
@@ -261,7 +189,7 @@ class OptimizationRequest
     public function validate()
     {
         $errors = [];
-        foreach($this->operations as $op_name => $operation){
+        foreach($this->operations as $op_type => $operation){
             try {
                 $operation->validate();
             } catch(\Exception $e){

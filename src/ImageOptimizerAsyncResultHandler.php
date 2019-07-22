@@ -50,7 +50,7 @@ class ImageOptimizerAsyncResultHandler
         if(!empty($_POST[self::PARAM_ERROR_CODE])){
             throw new OptimizationException(
                 $_POST[self::PARAM_ERROR_CODE],
-                isset($_POST[self::PARAM_ERROR_CODE]) ? $_POST[self::PARAM_ERROR_CODE] : '',
+                isset($_POST[self::PARAM_ERROR_MESSAGE]) ? $_POST[self::PARAM_ERROR_MESSAGE] : '',
                 $task_id
             );
         }

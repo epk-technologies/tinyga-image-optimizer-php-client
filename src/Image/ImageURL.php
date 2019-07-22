@@ -16,11 +16,14 @@ class ImageURL extends Image
     function __construct($url, $file_name = null)
     {
         $this->setUrl($url);
-
-        if(trim($file_name) === ''){
-            $file_name = basename(explode('?', $this->url)[0]);
+        $path = parse_url($this->url, PHP_URL_PATH);
+        if(
+            $file_name === null &&
+            preg_match('~\.\w+$~', $path)
+        ){
+            $file_name = basename($path);
         }
-        parent::__construct($file_name);
+        parent::__construct((string)$file_name);
     }
 
     /**
@@ -39,20 +42,18 @@ class ImageURL extends Image
         if(!filter_var((string)$url, FILTER_VALIDATE_URL)){
             throw new \InvalidArgumentException("Invalid URL");
         }
-
         $this->url = (string)$url;
     }
 
     /**
      * @return string
      */
-    function getContent()
+    function getImageContent()
     {
         $content = @file_get_contents($this->url);
         if($content === false){
             throw new \RuntimeException("Failed to read URL '{$this->url}' content");
         }
-
         return $content;
     }
 }

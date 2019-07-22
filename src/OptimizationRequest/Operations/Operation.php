@@ -5,17 +5,19 @@ use RuntimeException;
 
 abstract class Operation implements \JsonSerializable
 {
+    const OPERATION_TYPE_JSON_FIELD = 'operation';
+
     /**
      * @return string
      */
-    abstract function getOperationName();
+    abstract function getOperationType();
 
     /**
      * @throws RuntimeException
      */
     public function validate()
     {
-        $operation = $this->getOperationName();
+        $operation = $this->getOperationType();
         $errors = [];
         foreach(get_object_vars($this) as $property => $value){
             try {
@@ -43,7 +45,9 @@ abstract class Operation implements \JsonSerializable
 
     public function jsonSerialize()
     {
-        return get_object_vars($this);
+        $params = get_object_vars($this);
+        $params[self::OPERATION_TYPE_JSON_FIELD] = $this->getOperationType();
+        return $params;
     }
 
     /**
@@ -85,7 +89,7 @@ abstract class Operation implements \JsonSerializable
         try {
             $this->_initFromString($value);
         } catch(\Exception $e){
-            throw new \RuntimeException("Cannot initialize operation '{$this->getOperationName()}' [" . get_class($this) . "] from string - {$e->getMessage()}");
+            throw new \RuntimeException("Cannot initialize operation '{$this->getOperationType()}' [" . get_class($this) . "] from string - {$e->getMessage()}");
         }
     }
 

@@ -10,12 +10,7 @@ interface ImageInterface
     /**
      * @return string
      */
-    function getFileName();
-
-    /**
-     * @return string
-     */
-    function getContent();
+    function getImageContent();
 
     /**
      * @return ImageParameters

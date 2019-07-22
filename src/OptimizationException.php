@@ -2,7 +2,6 @@
 namespace Tinyga\ImageOptimizer;
 
 use Exception;
-use Throwable;
 
 class OptimizationException extends Exception
 {
@@ -26,7 +25,7 @@ class OptimizationException extends Exception
      */
     protected $task_id;
 
-    public function __construct($error_code, $error_message = "", $task_id = null, $code = 0, Throwable $previous = null)
+    public function __construct($error_code, $error_message = "", $task_id = null, $code = 0, $previous = null)
     {
         $this->error_code = $error_code;
         $this->task_id = $task_id;

@@ -11,20 +11,20 @@ class ImageFile extends Image
     protected $file;
 
     /**
-     * @param string|SplFileInfo $url
-     * @param null|string $file_name
+     * @param SplFileInfo $file
+     * @param string|null $file_name
      */
-    function __construct($url, $file_name = null)
+    function __construct(SplFileInfo $file, $file_name = null)
     {
-        $this->setFile($url);
-        if(trim($file_name) === ''){
-            $file_name = basename($this->getFilePath());
+        $this->setFile($file);
+        if($file_name === null){
+            $file_name = $file->getBasename();
         }
         parent::__construct($file_name);
     }
 
     /**
-     * @return SplFileInfo|string
+     * @return SplFileInfo
      */
     public function getFile()
     {
@@ -32,45 +32,23 @@ class ImageFile extends Image
     }
 
     /**
-     * @param SplFileInfo|string $file
+     * @param SplFileInfo $file
      */
-    protected function setFile($file)
+    protected function setFile(SplFileInfo $file)
     {
-        if(
-            (!is_string($file) || !$file) &&
-            !$file instanceof SplFileInfo
-        ){
-            throw new \InvalidArgumentException("Invalid file");
-        }
-
         $this->file = $file;
-    }
-
-    public function getFilePath()
-    {
-        if($this->file === null){
-            throw new \RuntimeException("File is not defined");
-        }
-
-        if($this->file instanceof SplFileInfo){
-            $path = $this->file->getRealPath();
-        } else {
-            $path = $this->file;
-        }
-
-        return $path;
     }
 
     /**
      * @return string
      */
-    function getContent()
+    function getImageContent()
     {
-        $path = $this->getFilePath();
-        if(!is_file($path) || !is_readable($path)){
-            throw new \RuntimeException("File '{$path}' does not exist or is not readable");
+        if(!$this->file->isFile() || !$this->file->isReadable()){
+            throw new \InvalidArgumentException("File '{$this->file->getPathname()}' does not exist or is not readable");
         }
 
+        $path = $this->file->getRealPath();
         $content = @file_get_contents($this->file);
         if($content === false){
             throw new \RuntimeException("Failed to read file '{$path}' content");

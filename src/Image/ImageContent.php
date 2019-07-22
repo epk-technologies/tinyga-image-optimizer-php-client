@@ -9,33 +9,21 @@ class ImageContent extends Image
     protected $content;
 
     /**
-     * @param null|string $content
-     * @param null|string $file_name
+     * @param string $content
+     * @param string $file_name
      */
-    function __construct($content = null, $file_name = null)
+    function __construct($content, $file_name = '')
     {
         parent::__construct($file_name);
-        if($content !== null){
-            $this->setContent($content);
-        }
+        $this->content = $content;
+        $this->getImageParameters();
     }
 
     /**
      * @return string
      */
-    public function getContent()
+    public function getImageContent()
     {
-        if(!$this->content){
-            throw new \RuntimeException("Image content is not defined");
-        }
         return $this->content;
-    }
-
-    /**
-     * @param string $content
-     */
-    public function setContent($content)
-    {
-        $this->content = $content;
     }
 }

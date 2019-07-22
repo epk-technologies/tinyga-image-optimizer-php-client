@@ -77,7 +77,7 @@ class OperationResize extends Operation
     }
 
 
-    function getOperationName()
+    function getOperationType()
     {
         return Operations::OPERATION_RESIZE;
     }

@@ -32,7 +32,7 @@ class OperationFlip extends Operation
     }
 
 
-    function getOperationName()
+    function getOperationType()
     {
         return Operations::OPERATION_FLIP;
     }

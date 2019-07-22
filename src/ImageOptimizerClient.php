@@ -6,6 +6,7 @@ use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\RequestOptions;
 use InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface;
+use Tinyga\ImageOptimizer\Image\Image;
 use Tinyga\ImageOptimizer\Image\ImageContent;
 use Tinyga\ImageOptimizer\Image\ImageURL;
 
@@ -13,22 +14,21 @@ class ImageOptimizerClient
 {
     const API_KEY_PARAM = 'api-key';
     const DEFAULT_ENDPOINT = 'https://image-optimizer.tinyga.com/api/v1/';
-    const CLIENT_TIMEOUT = 90.0;
+    const DEFAULT_CLIENT_TIMEOUT = 90.0;
 
     const PARAM_IMAGE = 'image';
     const PARAM_IMAGE_URL = 'image_url';
 
-    const PARAM_QUALITY = 'quality';
-    const PARAM_KEEP_METADATA = 'keep_metadata';
+    const PARAM_OUTPUT = 'output';
     const PARAM_POST_RESULT_TO_URL = 'post_result_to_url';
     const PARAM_OPERATIONS = 'operations';
     const PARAM_TEST = 'test';
-    const PARAM_OUTPUT_TYPE = 'output_type';
-
-    const KEEP_METADATA_SEPARATOR = ',';
 
     const OPTIMIZATION_API_METHOD = 'process-image';
     const TASK_ID_HEADER = 'Task-ID';
+
+    const RESP_ERROR_CODE = 'error_code';
+    const RESP_ERROR_MESSAGE = 'error_message';
 
 
     /**
@@ -40,6 +40,11 @@ class ImageOptimizerClient
      * @var string
      */
     protected $api_key;
+
+    /**
+     * @var float
+     */
+    protected $client_timeout = self::DEFAULT_CLIENT_TIMEOUT;
 
 
     /**
@@ -56,6 +61,24 @@ class ImageOptimizerClient
             $this->setApiEndpointUrl($api_endpoint);
         }
     }
+
+    /**
+     * @return float
+     */
+    public function getClientTimeout()
+    {
+        return $this->client_timeout;
+    }
+
+    /**
+     * @param float $client_timeout
+     */
+    public function setClientTimeout($client_timeout)
+    {
+        $this->client_timeout = (float)$client_timeout;
+    }
+
+
 
     /**
      * @param string $api_method
@@ -131,7 +154,7 @@ class ImageOptimizerClient
 
         $client = new HttpClient([
             'base_uri' => $this->getApiEndpointUrl(),
-            'timeout' => self::CLIENT_TIMEOUT
+            'timeout' => $this->client_timeout
         ]);
 
         try {
@@ -162,12 +185,12 @@ class ImageOptimizerClient
             ){
                 $body = (string)$response->getBody();
                 $decoded = @json_decode($body, true);
-                if(isset($decoded['error_code'])){
-                    $error_code = $decoded['error_code'];
+                if(isset($decoded[self::RESP_ERROR_CODE])){
+                    $error_code = $decoded[self::RESP_ERROR_CODE];
                 }
 
-                if(isset($decoded['error_message'])){
-                    $error_message = $decoded['error_message'];
+                if(isset($decoded[self::RESP_ERROR_MESSAGE])){
+                    $error_message = $decoded[self::RESP_ERROR_MESSAGE];
                 }
             }
 
@@ -192,8 +215,7 @@ class ImageOptimizerClient
     {
         $inline_params = [
             self::API_KEY_PARAM => $this->getApiKey(),
-            self::PARAM_QUALITY => $request->getQuality(),
-            self::PARAM_KEEP_METADATA => implode(self::KEEP_METADATA_SEPARATOR, $request->getKeepMetadata())
+            self::PARAM_OUTPUT => json_encode($request->getOutputParameters()),
         ];
 
         if($request->isTest()){
@@ -204,15 +226,9 @@ class ImageOptimizerClient
             $inline_params[self::PARAM_POST_RESULT_TO_URL] = $request->getPostResultToUrl();
         }
 
-        if($request->getOutputType()){
-            $inline_params[self::PARAM_OUTPUT_TYPE] = $request->getOutputType();
-        }
-
         $operations = $request->getOperations();
         if($operations){
-            foreach($operations as $op_name => $operation){
-                $inline_params[self::PARAM_OPERATIONS . "[{$op_name}]"] = json_encode($operation);
-            }
+            $inline_params[self::PARAM_OPERATIONS] = json_encode(array_values($operations));
         }
 
         $image = $request->getImage();
@@ -230,12 +246,22 @@ class ImageOptimizerClient
                 $post_params[] = ['name' => $param, 'contents' => $value];
             }
 
-            $post_params[] = [
-                'name' => self::PARAM_IMAGE,
-                'contents' => $image->getContent(),
-                'filename' => $image->getFileName()
-            ];
+            if($image instanceof Image){
 
+                $post_params[] = [
+                    'name' => self::PARAM_IMAGE,
+                    'contents' => $image->getImageContent(),
+                    'filename' => $image->getFileName()
+                ];
+
+            } else {
+
+                $post_params[] = [
+                    'name' => self::PARAM_IMAGE,
+                    'contents' => $image->getImageContent()
+                ];
+
+            }
         }
 
         return $post_params;
@@ -271,12 +297,9 @@ class ImageOptimizerClient
         }
 
         $disposition = $response->getHeaderLine('Content-Disposition');
-        if(!preg_match('~filename="?([^"]+)"?$~', $disposition, $m)){
-            throw new OptimizationException(
-                OptimizationException::ERR_PROTOCOL_ERROR,
-                "Failed to determine image file name from response Content-Disposition",
-                $task_id
-            );
+        $result_fn = '';
+        if(preg_match('~filename="?([^"]+)"?$~', $disposition, $m)){
+            $result_fn = $m[1];
         }
 
         $content = (string)$response->getBody();
@@ -288,7 +311,7 @@ class ImageOptimizerClient
             );
         }
 
-        $image = new ImageContent($content, $m[1]);
+        $image = new ImageContent($content, $result_fn);
         return new OptimizationResult($task_id, $image);
     }
 }

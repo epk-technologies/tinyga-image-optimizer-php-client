@@ -6,7 +6,7 @@ use Tinyga\ImageOptimizer\OptimizationRequest\Operations;
 
 class OperationGrayscale extends Operation
 {
-    function getOperationName()
+    function getOperationType()
     {
         return Operations::OPERATION_GRAYSCALE;
     }

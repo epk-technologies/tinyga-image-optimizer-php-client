@@ -4,38 +4,28 @@ namespace Tinyga\ImageOptimizer\Image;
 abstract class Image implements ImageInterface
 {
     /**
-     * @var string
-     */
-    protected $file_name;
-
-    /**
      * @var ImageParameters
      */
     protected $image_parameters;
+
+    /**
+     * @var string
+     */
+    protected $file_name = '';
 
     /**
      * @param string $file_name
      */
     public function __construct($file_name)
     {
-        $this->file_name = trim($file_name);
-        if($this->file_name === ''){
-            throw new \InvalidArgumentException("File name is not defined");
-        }
+        $this->setFileName($file_name);
     }
 
-    /**
-     * @return string
-     */
-    public function getFileName()
-    {
-        return (string)$this->file_name;
-    }
 
     /**
      * @return ImageParameters
      */
-    function getImageParameters()
+    public function getImageParameters()
     {
         if(!$this->image_parameters){
             $this->image_parameters = ImageParametersResolver::resolveImageParameters($this);
@@ -43,12 +33,26 @@ abstract class Image implements ImageInterface
         return $this->image_parameters;
     }
 
-
     /**
      * @return string
      */
+    public function getFileName()
+    {
+        return $this->file_name;
+    }
+
+    /**
+     * @param string $file_name
+     */
+    public function setFileName($file_name)
+    {
+        $this->file_name = trim($file_name);
+    }
+
+
+
     function __toString()
     {
-        return $this->getContent();
+        return $this->getImageContent();
     }
 }

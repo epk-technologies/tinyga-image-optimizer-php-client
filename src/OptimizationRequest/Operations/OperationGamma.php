@@ -27,7 +27,7 @@ class OperationGamma extends Operation
     /**
      * @return string
      */
-    function getOperationName()
+    function getOperationType()
     {
         return Operations::OPERATION_GAMMA;
     }

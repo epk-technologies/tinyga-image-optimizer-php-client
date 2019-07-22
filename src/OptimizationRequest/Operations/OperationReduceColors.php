@@ -44,7 +44,7 @@ class OperationReduceColors extends Operation
         }
     }
 
-    function getOperationName()
+    function getOperationType()
     {
         return Operations::OPERATION_REDUCE_COLORS;
     }

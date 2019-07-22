@@ -1,7 +1,7 @@
 <?php
 namespace Tinyga\ImageOptimizer;
 
-use Tinyga\ImageOptimizer\Image\ImageContent;
+use Tinyga\ImageOptimizer\Image\ImageInterface;
 
 class OptimizationResult
 {
@@ -11,15 +11,15 @@ class OptimizationResult
     protected $task_id;
 
     /**
-     * @var ImageContent|null
+     * @var ImageInterface|null
      */
     protected $optimized_image;
 
     /**
      * @param string $task_id
-     * @param ImageContent|null $optimized_image
+     * @param ImageInterface|null $optimized_image
      */
-    public function __construct($task_id, ImageContent $optimized_image = null)
+    public function __construct($task_id, ImageInterface $optimized_image = null)
     {
         $this->task_id = $task_id;
         $this->optimized_image = $optimized_image;
@@ -34,7 +34,7 @@ class OptimizationResult
     }
 
     /**
-     * @return ImageContent|null
+     * @return ImageInterface|null
      */
     public function getOptimizedImage()
     {

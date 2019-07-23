@@ -2,32 +2,48 @@
 namespace Tinyga\ImageOptimizer;
 
 use Tinyga\ImageOptimizer\Image\ImageInterface;
+use Tinyga\ImageOptimizer\OptimizationRequest\Operations;
 use Tinyga\ImageOptimizer\OptimizationRequest\Operations\Operation;
 use Tinyga\ImageOptimizer\OptimizationRequest\OutputParameters;
 
 class OptimizationRequest
 {
     /**
+     * Image data source
+     *
      * @var ImageInterface
      */
     protected $image;
 
     /**
+     * When URL is defined, optimization will become asynchronous.
+     * API will return only task ID to identify task later.
+     *
+     * @see ImageOptimizerPostResultHandler to see how to handle result later
+     *
      * @var string|null
      */
     protected $post_result_to_url;
 
     /**
+     * Do not process anything, just for API integration testing.
+     * No credit will be used in test mode.
+     *
      * @var bool
      */
     protected $test = false;
 
     /**
+     * Definition of required output (format, quality, metadata handling etd.)
+     *
      * @var OutputParameters
      */
     protected $output_parameters;
 
     /**
+     * Additional processing operations like resizing, rotation, gamma adjustment etc.
+     * @see Operations
+     *
      * @var Operation[]
      */
     protected $operations = [];
@@ -35,7 +51,7 @@ class OptimizationRequest
     /**
      * @param ImageInterface $image
      * @param OutputParameters|null $output_parameters
-     * @param array $operations
+     * @param Operation[] $operations
      */
     function __construct(ImageInterface $image, OutputParameters $output_parameters = null, array $operations = [])
     {

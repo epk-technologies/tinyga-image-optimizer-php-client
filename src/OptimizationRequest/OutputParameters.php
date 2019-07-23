@@ -52,26 +52,47 @@ class OutputParameters implements \JsonSerializable
     const DEFAULT_BACKGROUND_COLOR = '000000';
 
     /**
+     * Convert image to given format
+     *
      * @var string|null
      */
     protected $image_type;
 
     /**
+     * Optimization quality
+     *
+     * @see OutputParameters::LOSSLESS_QUALITY (100) = pixel perfect lossless
+     * @see OutputParameters::DEFAULT_LOSSY_QUALITY (95) = perceptional lossless (but not pixel perfect)
+     *
      * @var int
      */
     protected $quality = self::LOSSLESS_QUALITY;
 
     /**
+     * List of metadata to keep in image
+     *
+     * - empty array = remove all metadata
+     * @see OutputParameters::META_ALL = do not remove any metadata
+     * @see OutputParameters::META_*  = keep only listed metadata
+     *
      * @var array
      */
     protected $keep_metadata = [self::META_ALL];
 
     /**
+     * Chroma subsampling encoding for JPEGs
+     *
+     * @see OutputParameters::SUBSAMPLING_AUTO = let Tinyga to decide (may be wrong in very rare cases)
+     * @see OutputParameters::SUBSAMPLING_ORIGINAL = keep original encoding
+     * @see OutputParameters::SUBSAMPLING_* = other methods
+     *
      * @var string
      */
     protected $jpeg_chroma_subsampling = self::SUBSAMPLING_AUTO;
 
     /**
+     * RGB color of background when converting image with alpha channel to JPEG
+     *
      * @var string
      */
     protected $background_color = self::DEFAULT_BACKGROUND_COLOR;

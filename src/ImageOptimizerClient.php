@@ -132,10 +132,10 @@ class ImageOptimizerClient
 
     /**
      * Send image for optimization/processing
-     * If anything fails, OptimizationException is thrown
+     * If anything fails, @see OptimizationException is thrown
      * If post_result_to_url is defined in request:
      * - result with task ID and without optimized image will be returned to be processed later
-     * - @see ImageOptimizerAsyncResultHandler how to handle request from Tinyga when optimization is ready
+     * - @see ImageOptimizerPostResultHandler how to handle request from Tinyga when optimization is ready
      *
      *
      * @param OptimizationRequest $request

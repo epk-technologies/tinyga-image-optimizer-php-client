@@ -3,7 +3,7 @@ namespace Tinyga\ImageOptimizer;
 
 use Tinyga\ImageOptimizer\Image\ImageContent;
 
-class ImageOptimizerAsyncResultHandler
+class ImageOptimizerPostResultHandler
 {
     const PARAM_RESULT = 'result';
     const PARAM_RESULT_MD5 = 'result_md5';

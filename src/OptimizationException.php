@@ -25,6 +25,13 @@ class OptimizationException extends Exception
      */
     protected $task_id;
 
+    /**
+     * @param string $error_code
+     * @param string $error_message
+     * @param null|string $task_id
+     * @param int $code
+     * @param null|Exception $previous
+     */
     public function __construct($error_code, $error_message = "", $task_id = null, $code = 0, $previous = null)
     {
         $this->error_code = $error_code;

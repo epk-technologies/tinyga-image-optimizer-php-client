@@ -1,6 +1,8 @@
 <?php
 namespace Tinyga\ImageOptimizer\Image;
 
+use Tinyga\ImageOptimizer\Utils\FileSizeFormatter;
+
 class ImageParameters
 {
     /** @var string */
@@ -81,5 +83,16 @@ class ImageParameters
     public function isGIF()
     {
         return $this->mime_type === ImageInterface::TYPE_GIF;
+    }
+
+    function __toString()
+    {
+        return sprintf(
+            "%s, %dx%d, %s",
+            $this->mime_type,
+            $this->width,
+            $this->height,
+            FileSizeFormatter::formatFileSize($this->file_size)
+        );
     }
 }

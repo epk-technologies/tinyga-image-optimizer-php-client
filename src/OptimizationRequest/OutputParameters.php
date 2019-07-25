@@ -32,6 +32,8 @@ class OutputParameters implements \JsonSerializable
     const PARAM_JPEG_CHROMA_SUBSAMPLING = 'jpeg_chroma_subsampling';
     const PARAM_BACKGROUND_COLOR = 'background_color';
 
+    const KEEP_METADATA_DELIMITER = ',';
+
     protected static $allowed_keep_metadata = [
         self::META_ALL,
         self::META_PROFILE,
@@ -255,7 +257,10 @@ class OutputParameters implements \JsonSerializable
         $params[self::PARAM_BACKGROUND_COLOR] = $this->getBackgroundColor();
 
         if($this->keep_metadata){
-            $params[self::PARAM_KEEP_METADATA] = $this->getKeepMetadata();
+            $params[self::PARAM_KEEP_METADATA] = implode(
+                self::KEEP_METADATA_DELIMITER,
+                $this->getKeepMetadata()
+            );
         }
 
         return $params;

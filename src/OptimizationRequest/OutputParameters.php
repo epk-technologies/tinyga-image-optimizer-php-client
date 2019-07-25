@@ -26,6 +26,12 @@ class OutputParameters implements \JsonSerializable
     const SUBSAMPLING_422 = '4:2:2';
     const SUBSAMPLING_444 = '4:4:4';
 
+    const PARAM_OUTPUT_TYPE = 'output_type';
+    const PARAM_QUALITY = 'quality';
+    const PARAM_KEEP_METADATA = 'keep_metadata';
+    const PARAM_JPEG_CHROMA_SUBSAMPLING = 'jpeg_chroma_subsampling';
+    const PARAM_BACKGROUND_COLOR = 'background_color';
+
     protected static $allowed_keep_metadata = [
         self::META_ALL,
         self::META_PROFILE,
@@ -56,7 +62,7 @@ class OutputParameters implements \JsonSerializable
      *
      * @var string|null
      */
-    protected $image_type;
+    protected $output_type;
 
     /**
      * Optimization quality
@@ -77,7 +83,7 @@ class OutputParameters implements \JsonSerializable
      *
      * @var array
      */
-    protected $keep_metadata = [self::META_ALL];
+    protected $keep_metadata = [];
 
     /**
      * Chroma subsampling encoding for JPEGs
@@ -100,9 +106,9 @@ class OutputParameters implements \JsonSerializable
     /**
      * @param int|null $quality
      * @param array|null $keep_metadata
-     * @param string|null $mime_type
+     * @param string|null $output_type
      */
-    public function __construct($quality = null, array $keep_metadata = null, $mime_type = null)
+    public function __construct($quality = null, array $keep_metadata = null, $output_type = null)
     {
         if($quality !== null){
             $this->setQuality($quality);
@@ -112,8 +118,8 @@ class OutputParameters implements \JsonSerializable
             $this->setKeepMetadata($keep_metadata);
         }
 
-        if($mime_type !== null){
-            $this->setImageType($mime_type);
+        if($output_type !== null){
+            $this->setOutputType($output_type);
         }
     }
 
@@ -176,23 +182,23 @@ class OutputParameters implements \JsonSerializable
     /**
      * @return string|null
      */
-    public function getImageType()
+    public function getOutputType()
     {
-        return $this->image_type;
+        return $this->output_type;
     }
 
     /**
-     * @param string|null $image_type
+     * @param string|null $output_type
      */
-    public function setImageType($image_type)
+    public function setOutputType($output_type)
     {
         if(
-            $image_type !== null &&
-            !in_array($image_type, self::$allowed_output_types, true)
+            $output_type !== null &&
+            !in_array($output_type, self::$allowed_output_types, true)
         ){
-            throw new \InvalidArgumentException("Unsupported output mime type '{$image_type}'");
+            throw new \InvalidArgumentException("Unsupported output mime type '{$output_type}'");
         }
-        $this->image_type = $image_type;
+        $this->output_type = $output_type;
     }
 
 
@@ -232,6 +238,27 @@ class OutputParameters implements \JsonSerializable
             throw new \InvalidArgumentException("Invalid transparent color");
         }
         $this->background_color = (string)$background_color;
+    }
+
+    /**
+     * @return array
+     */
+    public function toAPIRequestParameters()
+    {
+        $params = [];
+        if($this->output_type !== null){
+            $params[self::PARAM_OUTPUT_TYPE] = $this->getOutputType();
+        }
+
+        $params[self::PARAM_QUALITY] = $this->getQuality();
+        $params[self::PARAM_JPEG_CHROMA_SUBSAMPLING] = $this->getJpegChromaSubsampling();
+        $params[self::PARAM_BACKGROUND_COLOR] = $this->getBackgroundColor();
+
+        if($this->keep_metadata){
+            $params[self::PARAM_KEEP_METADATA] = $this->getKeepMetadata();
+        }
+
+        return $params;
     }
 
     public function jsonSerialize()

@@ -19,7 +19,6 @@ class ImageOptimizerClient
     const PARAM_IMAGE = 'image';
     const PARAM_IMAGE_URL = 'image_url';
 
-    const PARAM_OUTPUT = 'output';
     const PARAM_POST_RESULT_TO_URL = 'post_result_to_url';
     const PARAM_OPERATIONS = 'operations';
     const PARAM_TEST = 'test';
@@ -214,9 +213,10 @@ class ImageOptimizerClient
     protected function preparePostParameters(OptimizationRequest $request, &$submit_method = null)
     {
         $inline_params = [
-            self::API_KEY_PARAM => $this->getApiKey(),
-            self::PARAM_OUTPUT => json_encode($request->getOutputParameters()),
+            self::API_KEY_PARAM => $this->getApiKey()
         ];
+
+        $inline_params += $request->getOutputParameters()->toAPIRequestParameters();
 
         if($request->isTest()){
             $inline_params[self::PARAM_TEST] = 1;
